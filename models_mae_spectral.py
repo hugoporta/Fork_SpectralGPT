@@ -14,8 +14,8 @@ from functools import partial
 
 import torch
 import torch.nn as nn
-from util import video_vit
-from util.logging import master_print as print
+from Fork_SpectralGPT.util import video_vit
+from Fork_SpectralGPT.util.logging import master_print as print
 
 
 class MaskedAutoencoderViT(nn.Module):

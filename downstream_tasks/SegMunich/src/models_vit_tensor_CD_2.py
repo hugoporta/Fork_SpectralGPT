@@ -16,7 +16,7 @@ import torch
 import torch.nn as nn
 # from util.logging import master_print as print
 
-from util.video_vit import Attention, Block, PatchEmbed
+from Fork_SpectralGPT.util.video_vit import Attention, Block, PatchEmbed
 
 from timm.models.vision_transformer import DropPath, Mlp
 import os

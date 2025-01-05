@@ -16,7 +16,7 @@ import torch
 import torch.nn as nn
 # from util.logging import master_print as print
 
-from util.video_vit import Attention, Block, PatchEmbed, Linear_Block, Linear_Attention
+from Fork_SpectralGPT.util.video_vit import Attention, Block, PatchEmbed, Linear_Block, Linear_Attention
 
 
 class VisionTransformer(nn.Module):
@@ -43,12 +43,14 @@ class VisionTransformer(nn.Module):
         dropout=0, #0.5
         sep_pos_embed=False,
         cls_embed=False,
+        feature_ext=False,
         **kwargs,
     ):
         super().__init__()
         # print(locals())
         #
         self.sep_pos_embed = sep_pos_embed
+        self.embed_dim = embed_dim
         # --------------------------------------------------------------------------
         # MAE encoder specifics
         self.patch_embed = PatchEmbed(
@@ -118,15 +120,16 @@ class VisionTransformer(nn.Module):
             ]
         )
 
+        self.feature_ext = feature_ext
+        if not feature_ext:
 
+            self.norm = norm_layer(embed_dim)
+            # --------------------------------------------------------------------------
 
-        self.norm = norm_layer(embed_dim)
-        # --------------------------------------------------------------------------
+            self.dropout = nn.Dropout(dropout)
+            self.head = nn.Linear(embed_dim, num_classes)
 
-        self.dropout = nn.Dropout(dropout)
-        self.head = nn.Linear(embed_dim, num_classes)
-
-        torch.nn.init.normal_(self.head.weight, std=0.02)
+            torch.nn.init.normal_(self.head.weight, std=0.02)
 
     @torch.jit.ignore
     def no_weight_decay(self):
@@ -190,13 +193,13 @@ class VisionTransformer(nn.Module):
         if requires_t_shape:
             x = x.view([N, T * L, C])
 
-        # classifier
-        x = x[:, 1:, :].mean(dim=1)  # global pool
-        x = self.norm(x)
-        # x = self.fc_norm(x)
-        x = self.dropout(x)
-        x = self.head(x)
-
+        if not self.feature_ext:
+            # classifier
+            x = x[:, 1:, :].mean(dim=1)  # global pool
+            x = self.norm(x)
+            # x = self.fc_norm(x)
+            x = self.dropout(x)
+            x = self.head(x)
 
         return x
 
